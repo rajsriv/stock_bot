@@ -109,8 +109,9 @@ async def start_dm(_, message: Message):
     await app.send_message(message.chat.id, stock_status, parse_mode=enums.ParseMode.MARKDOWN)
 
 # Handle the /buy command
-@app.on_message(filters.command("buy"))
+@app.on_message(filters.command("buy") & filters.private)
 async def buy_stock(_, message: Message):
+    # Rest of your code
     user_id = message.from_user.id
     user = get_user(user_id)
     if not user:
@@ -145,7 +146,7 @@ async def buy_stock(_, message: Message):
         await message.reply("Stock not found in the market.")
 
 # Handle the /sell command
-@app.on_message(filters.command("sell"))
+@app.on_message(filters.command("sell") & filters.private)
 async def sell_stock(_, message: Message):
     user_id = message.from_user.id
     user = get_user(user_id)
@@ -184,7 +185,7 @@ async def sell_stock(_, message: Message):
         await message.reply("Stock not found in the market.")
 
 # Handle the /account command to show user's stocks and compare with current prices
-@app.on_message(filters.command("account"))
+@app.on_message(filters.command("account") & filters.private)
 async def check_account(_, message: Message):
     user_id = message.from_user.id
     user = get_user(user_id)
@@ -211,7 +212,7 @@ async def check_account(_, message: Message):
     await message.reply(message_text, parse_mode=enums.ParseMode.MARKDOWN)
 
 # Handle the /market command to display one stock at a time with Next/Prev buttons
-@app.on_message(filters.command("market"))
+@app.on_message(filters.command("market") & filters.private)
 async def market_status(_, message: Message):
     stock_symbols = list(stock_market.keys())  # Get the list of all stock symbols
     current_stock_index = 0  # Start with the first stock
@@ -285,7 +286,7 @@ def calculate_profit_loss(initial_balance, current_balance):
     return percentage
 
 # Handle the /profile command to show user's profile
-@app.on_message(filters.command("profile"))
+@app.on_message(filters.command("profile") & filters.private)
 async def show_profile(_, message: Message):
     user_id = message.from_user.id
     user = get_user(user_id)
