@@ -379,5 +379,5 @@ async def achievement(_, message: Message):
     await message.reply(f"Your current business title: **{user_title}**", parse_mode=enums.ParseMode.MARKDOWN)
 
 # Run the bot
-app.run(port=5000)  # Listen on port 5000
+app.run()  # Listen on port 5000
 
