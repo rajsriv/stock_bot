@@ -190,7 +190,7 @@ async def check_account(_, message: Message):
     user = get_user(user_id)
     
     if not user:
-        await message.reply("Please start the bot by using /start.")
+        await message.reply("Use in DM")
         return
 
     portfolio = eval(user[2])
@@ -289,11 +289,11 @@ def calculate_profit_loss(initial_balance, current_balance):
 async def show_profile(_, message: Message):
     user_id = message.from_user.id
     user = get_user(user_id)
-
+    
     if not user:
-        await message.reply("Please start the bot by using /start.")
+        await message.reply("Use in DM")
         return
-
+        
     # Get user's name and Telegram ID
     user_name = message.from_user.first_name
     telegram_id = message.from_user.id
