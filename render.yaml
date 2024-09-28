@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: stock-bot
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python stock.py"
+    pythonVersion: 3.10
