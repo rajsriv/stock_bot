@@ -11,7 +11,7 @@ from datetime import datetime
 # Initialize the Pyrogram client
 api_id = "2208722"
 api_hash = "1d6e03d89eab1c53223d40fc154999e0"
-bot_token = 'YOUR_BOT_TOKEN'
+bot_token = '6537996760:AAGQ5CPd2p4Jlk_DD2h8pIeJz0647cbHT30'
 
 app = Client("stockManiaBot", api_id=api_id, api_hash=api_hash, bot_token=bot_token)
 
