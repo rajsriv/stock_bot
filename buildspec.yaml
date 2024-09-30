@@ -1,0 +1,10 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - pip install pyrogram  # Install the required package
+      - pip install tgcrypto  # If required by pyrogram for encrypted sessions
+  build:
+    commands:
+      - python stock.py
