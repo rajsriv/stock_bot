@@ -146,7 +146,7 @@ async def buy_stock(_, message: Message):
         await message.reply("Stock not found in the market.")
 
 # Handle the /sell command
-@app.on_message(filters.command("sell") & filters.private)
+@app.on_message(filters.command("sell"))
 async def sell_stock(_, message: Message):
     user_id = message.from_user.id
     user = get_user(user_id)
@@ -185,7 +185,7 @@ async def sell_stock(_, message: Message):
         await message.reply("Stock not found in the market.")
 
 # Handle the /account command to show user's stocks and compare with current prices
-@app.on_message(filters.command("account") & filters.private)
+@app.on_message(filters.command("account"))
 async def check_account(_, message: Message):
     user_id = message.from_user.id
     user = get_user(user_id)
@@ -212,7 +212,7 @@ async def check_account(_, message: Message):
     await message.reply(message_text, parse_mode=enums.ParseMode.MARKDOWN)
 
 # Handle the /market command to display one stock at a time with Next/Prev buttons
-@app.on_message(filters.command("market") & filters.private)
+@app.on_message(filters.command("market"))
 async def market_status(_, message: Message):
     stock_symbols = list(stock_market.keys())  # Get the list of all stock symbols
     current_stock_index = 0  # Start with the first stock
@@ -286,7 +286,7 @@ def calculate_profit_loss(initial_balance, current_balance):
     return percentage
 
 # Handle the /profile command to show user's profile
-@app.on_message(filters.command("profile") & filters.private)
+@app.on_message(filters.command("profile"))
 async def show_profile(_, message: Message):
     user_id = message.from_user.id
     user = get_user(user_id)
@@ -378,6 +378,56 @@ async def achievement(_, message: Message):
             break
 
     await message.reply(f"Your current business title: **{user_title}**", parse_mode=enums.ParseMode.MARKDOWN)
+
+# List of developer IDs (you can add more developer user IDs here)
+DEVELOPER_IDS = [1830238543]  # Replace with actual developer IDs ex. [1830238543, 987654321] 
+
+# Handle the /airdrop command (developer-only)
+@app.on_message(filters.command("airdrop") & filters.private)
+async def airdrop(_, message: Message):
+    user_id = message.from_user.id
+    
+    # Check if the user is a developer
+    if user_id not in DEVELOPER_IDS:
+        await message.reply("You are not authorized to use this command.")
+        return
+    
+    # Extract the airdrop amount from the command
+    text = message.text.split(" ")
+    if len(text) != 2:
+        await message.reply("Usage: /airdrop [amount]")
+        return
+
+    try:
+        airdrop_amount = float(text[1])
+    except ValueError:
+        await message.reply("Please enter a valid number for the amount.")
+        return
+    
+    # Fetch all users from the database
+    cursor.execute("SELECT user_id, balance FROM users")
+    users = cursor.fetchall()
+    
+    # Loop through each user and update their balance
+    for user in users:
+        user_id = user[0]
+        current_balance = user[1]
+        new_balance = current_balance + airdrop_amount
+        
+        # Update the user's balance in the database
+        cursor.execute("UPDATE users SET balance=? WHERE user_id=?", (new_balance, user_id))
+        conn.commit()
+        
+        # Send a notification to the user
+        try:
+            await app.send_message(user_id, f"Congratulations! You have received an airdrop of ${airdrop_amount:.2f}. Your new balance is ${new_balance:.2f}.")
+        except Exception as e:
+            # Handle cases where the bot can't send a message (e.g., user blocked the bot)
+            print(f"Failed to send airdrop message to user {user_id}: {e}")
+    
+    # Confirm to the developer that the airdrop was successful
+    await message.reply(f"Airdrop of ${airdrop_amount:.2f} has been successfully added to all users.")
+
 
 # Run the bot
 app.run()  # Listen on port 5000
