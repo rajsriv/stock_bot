@@ -108,6 +108,33 @@ async def start_dm(_, message: Message):
     await app.send_message(message.chat.id, welcome, parse_mode=enums.ParseMode.MARKDOWN)
     await app.send_message(message.chat.id, stock_status, parse_mode=enums.ParseMode.MARKDOWN)
 
+# Handle inline queries for searching stocks
+@app.on_inline_query()
+async def answer_inline_query(client, inline_query):
+    query = inline_query.query.strip().lower()
+
+    # If the query is empty, don't return any results
+    if not query:
+        return
+
+    # Search for matching stocks by symbol or name
+    results = []
+    for stock_symbol, stock in stock_market.items():
+        if query in stock_symbol.lower() or query in stock.name.lower():
+            stock_info = f"{stock.name} ({stock_symbol})\nPrice: ${stock.price:.2f}"
+            results.append(
+                pyrogram.types.InlineQueryResultArticle(
+                    title=f"{stock.name} ({stock_symbol})",
+                    description=f"Price: ${stock.price:.2f}",
+                    input_message_content=pyrogram.types.InputTextMessageContent(
+                        message_text=stock_info
+                    )
+                )
+            )
+
+    # Answer the inline query with the matching results
+    await inline_query.answer(results, cache_time=1)
+
 # Handle the /buy command
 @app.on_message(filters.command("buy") & filters.private)
 async def buy_stock(_, message: Message):
