@@ -42,33 +42,39 @@ except sqlite3.OperationalError:
 
 # Define the stock class
 class Stock:
-    def __init__(self, name, price, total_supply):
+    def __init__(self, name, price):
         self.name = name
         self.price = price
-        self.total_supply = total_supply  # Initial supply for Uniswap-style liquidity pool
-        self.k = self.total_supply * self.price  # Constant product formula
 
-    def update_price(self, traded_amount):
-        # Adjust the price based on the Uniswap model
-        new_supply = self.total_supply - traded_amount  # Simulate stock being bought or sold
-        if new_supply <= 0:
-            new_supply = 0.1  # Avoid division by zero
-        self.price = self.k / new_supply  # Apply the constant product formula to adjust price
-        self.total_supply = new_supply
+    def update_price(self):
+        self.price += random.uniform(-5, 5)
 
-# Create a dictionary to store stocks with initial total supply
+# Create a dictionary to store stocks
 stock_market = {
-    "ASHCL": Stock("Ashirwad Capital Ltd", 5, 1000),
-    "SPCL": Stock("Speedage Commercials Ltd", 10, 1000),
-    "UCOB": Stock("UCO Bank", 50, 1000),
-    "AAPL": Stock("Apple Inc.", 150, 1000),
-    "TSTL": Stock("Tata Steel", 250, 1000),
-    "NSTLE": Stock("Nestle India", 2745, 1000),
-    "GOOGL": Stock("Alphabet Inc.", 2800, 1000),
-    "AMZN": Stock("Amazon.com Inc.", 3300, 1000),
-    "HAIL": Stock("Honeywell Automation India Ltd", 49540, 1000),
-    "MRF": Stock("MRF Ltd", 139156, 1000),
+    "ASHCL": Stock("Ashirwad Capital Ltd", 5),
+    "SPCL": Stock("Speedage Commercials Ltd", 10),
+    "UCOB": Stock("UCO Bank", 50),
+    "AAPL": Stock("Apple Inc.", 150),
+    "TSTL": Stock("Tata Steel", 250),
+    "NSTLE": Stock("Nestle India", 2745),
+    "GOOGL": Stock("Alphabet Inc.", 2800),
+    "AMZN": Stock("Amazon.com Inc.", 3300),
+    "HAIL": Stock("Honeywell Automation India Ltd", 49540),
+    "MRF": Stock("MRF Ltd", 139156),
 }
+
+
+# Function to periodically update stock prices
+def update_stock_prices():
+    while True:
+        for stock_symbol, stock in stock_market.items():
+            stock.update_price()
+        time.sleep(3 * 60 * 60)  # Update every 3 hours
+
+# Create and start a thread to update stock prices
+update_thread = threading.Thread(target=update_stock_prices)
+update_thread.daemon = True
+update_thread.start()
 
 # Function to get user data from the database
 def get_user(user_id):
@@ -177,6 +183,7 @@ async def answer_inline_query(client, inline_query):
 # Handle the /buy command
 @app.on_message(filters.command("buy") & filters.private)
 async def buy_stock(_, message: Message):
+    # Rest of your code
     user_id = message.from_user.id
     user = get_user(user_id)
     if not user:
@@ -200,19 +207,17 @@ async def buy_stock(_, message: Message):
             portfolio = eval(user[2])
             portfolio[stock_symbol] = portfolio.get(stock_symbol, 0) + quantity
 
-            # Update stock price after the trade (Uniswap-style)
-            stock.update_price(quantity)
-
             # Update the user's balance and portfolio in the database
             cursor.execute("UPDATE users SET balance=?, portfolio=? WHERE user_id=?", (new_balance, str(portfolio), user_id))
             conn.commit()
 
-            await message.reply(f"You have purchased {quantity} shares of {stock.name}. New price: ${stock.price:.2f}.")
+            await message.reply(f"You have purchased {quantity} shares of {stock.name}.")
         else:
             await message.reply("Not enough funds in your wallet to buy.")
     else:
         await message.reply("Stock not found in the market.")
 
+# Handle the /sell command
 @app.on_message(filters.command("sell"))
 async def sell_stock(_, message: Message):
     user_id = message.from_user.id
@@ -241,16 +246,13 @@ async def sell_stock(_, message: Message):
             if portfolio[stock_symbol] == 0:
                 del portfolio[stock_symbol]  # Remove stock from portfolio if all shares are sold
 
-            # Update stock price after the trade (Uniswap-style)
-            stock.update_price(-quantity)
-
             # Update the user's balance and portfolio in the database
             cursor.execute("UPDATE users SET balance=?, portfolio=? WHERE user_id=?", (new_balance, str(portfolio), user_id))
             conn.commit()
 
-            await message.reply(f"You have sold {quantity} shares of {stock.name}. New price: ${stock.price:.2f}.")
+            await message.reply(f"You have sold {quantity} shares of {stock.name}.")
         else:
-            await message.reply(f"You don't own enough shares of {stock.name}.")
+            await message.reply("You don't have enough shares to sell.")
     else:
         await message.reply("Stock not found in the market.")
 
