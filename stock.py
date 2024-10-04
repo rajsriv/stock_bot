@@ -276,6 +276,37 @@ async def sell_stock(_, message: Message):
     else:
         await message.reply("Stock not found in the market.")
 
+@app.on_message(filters.command("stats"))
+async def stock_stats(_, message: Message):
+    user_id = message.from_user.id
+    text = message.text.split(" ")
+
+    if len(text) != 2:
+        await message.reply("Usage: /stats [stock_symbol]")
+        return
+
+    stock_symbol = text[1].upper()
+
+    # Check if the stock symbol exists in the stock market
+    if stock_symbol not in stock_market:
+        await message.reply("Stock not found in the market.")
+        return
+
+    stock = stock_market[stock_symbol]
+
+    # Generate the stock price graph
+    graph_file = generate_stock_price_graph(stock_symbol, stock)
+
+    # Prepare the caption with stock details
+    caption = (
+        f"**{stock.name} ({stock_symbol})**\n"
+        f"Current Price: ${stock.price:.2f}\n"
+        f"Price History: {len(stock.price_history)} updates"
+    )
+
+    # Send the generated graph image to the user
+    await app.send_photo(user_id, graph_file, caption=caption)
+
 # Handle the /account command to show user's stocks and compare with current prices
 @app.on_message(filters.command("account"))
 async def check_account(_, message: Message):
