@@ -487,7 +487,7 @@ async def achievement(_, message: Message):
 DEVELOPER_IDS = [1830238543]  # Replace with actual developer IDs ex. [1830238543, 987654321] 
 
 # Handle the /resetdb command (developer-only)
-@app.on_message(filters.command("resetdb") & filters.private)
+@app.on_message(filters.command("resetdb"))
 async def reset_db(_, message: Message):
     user_id = message.from_user.id
 
