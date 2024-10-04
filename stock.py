@@ -485,6 +485,38 @@ async def show_stocks_hold(_, callback_query):
 
     await callback_query.message.edit_text(message_text, parse_mode=enums.ParseMode.MARKDOWN)
 
+# Handle the /give command (developer-only)
+@app.on_message(filters.command("give"))
+async def give_balance(_, message: Message):
+    user_id = message.from_user.id
+
+    # Check if the user is a developer
+    if user_id not in DEVELOPER_IDS:
+        await message.reply("You are not authorized to use this command.")
+        return
+
+    text = message.text.split(" ")
+
+    # Check if the correct number of arguments is provided
+    if len(text) != 3:
+        await message.reply("Usage: /give {user_id} {amount}")
+        return
+
+    target_user_id = int(text[1])
+    amount = float(text[2])
+
+    # Check if the target user exists
+    target_user = get_user(target_user_id)
+    if not target_user:
+        await message.reply("User not found in the database.")
+        return
+
+    # Update the user's balance
+    new_balance = target_user[1] + amount
+    cursor.execute("UPDATE users SET balance=? WHERE user_id=?", (new_balance, target_user_id))
+    conn.commit()
+
+    await message.reply(f"Added ${amount:.2f} to user {target_user_id}'s balance. New balance: ${new_balance:.2f}")
 
 # Handle the /achievement command to give titles based on balance
 @app.on_message(filters.command("achievement"))
