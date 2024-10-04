@@ -308,22 +308,25 @@ async def market_status(_, message: Message):
     stock_symbols = list(stock_market.keys())  # Get the list of all stock symbols
     current_stock_index = 0  # Start with the first stock
 
-    # Function to generate inline buttons for navigating stock list and requesting graph
-    def generate_market_buttons(stock_index):
-        prev_button = InlineKeyboardButton("⬅️ Previous", callback_data=f"prev_{stock_index}")
-        next_button = InlineKeyboardButton("➡️ Next", callback_data=f"next_{stock_index}")
-        graph_button = InlineKeyboardButton("📈 Show Graph", callback_data=f"graph_{stock_index}")
-        buttons = [[prev_button, next_button], [graph_button]]  # Added graph button
-        return InlineKeyboardMarkup(buttons)
-
     # Send the initial stock details message with navigation buttons
-    stock_symbol = stock_symbols[current_stock_index]
+    await send_stock_details(message.chat.id, current_stock_index)
+
+# Function to send stock details and buttons
+async def send_stock_details(chat_id, stock_index):
+    stock_symbols = list(stock_market.keys())
+    stock_symbol = stock_symbols[stock_index]
     stock = stock_market[stock_symbol]
     stock_text = f"**{stock.name} ({stock_symbol})**\n\nPrice: ${stock.price:.2f}"
 
-    await message.reply(
+    # Generate buttons for navigation and graph
+    buttons = generate_market_buttons(stock_index)
+    graph_button = InlineKeyboardButton("📈 Show Graph", callback_data=f"graph_{stock_index}")  # Always include graph button
+    buttons.append([graph_button])  # Add graph button below navigation buttons
+
+    await app.send_message(
+        chat_id,
         stock_text,
-        reply_markup=generate_market_buttons(current_stock_index),
+        reply_markup=InlineKeyboardMarkup(buttons),
         parse_mode=enums.ParseMode.MARKDOWN
     )
 
@@ -343,7 +346,6 @@ async def show_stock_graph(_, query):
     # Send the generated graph image to the user
     await app.send_photo(query.message.chat.id, graph_file, caption=f"Price history of {stock.name} ({stock_symbol})")
 
-
 # Handle the callback queries for navigating stock details
 @app.on_callback_query(filters.regex(r"^(prev|next)_\d+"))
 async def navigate_stocks(_, query):
@@ -357,15 +359,10 @@ async def navigate_stocks(_, query):
     elif "next" in query.data:
         stock_index += 1
 
-    stock_symbol = stock_symbols[stock_index]
-    stock = stock_market[stock_symbol]
-    stock_text = f"**{stock.name} ({stock_symbol})**\n\nPrice: ${stock.price:.2f}"
+    # Ensure stock_index stays within bounds
+    stock_index = max(0, min(stock_index, len(stock_symbols) - 1))
 
-    await query.message.edit_text(
-        stock_text,
-        reply_markup=generate_market_buttons(stock_index),
-        parse_mode=enums.ParseMode.MARKDOWN
-    )
+    await send_stock_details(query.message.chat.id, stock_index)  # Send updated stock details
 
 # Function to generate buttons (kept outside of both functions for reusability)
 def generate_market_buttons(stock_index):
