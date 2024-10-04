@@ -372,6 +372,7 @@ def generate_market_buttons(stock_index):
     stock_symbols = list(stock_market.keys())
     prev_button = InlineKeyboardButton("⬅️ Previous", callback_data=f"prev_{stock_index}")
     next_button = InlineKeyboardButton("➡️ Next", callback_data=f"next_{stock_index}")
+    graph_button = InlineKeyboardButton("📈 Show Graph", callback_data=f"graph_{stock_index}")
     buttons = []
 
     if stock_index > 0:
