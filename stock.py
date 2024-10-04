@@ -454,6 +454,44 @@ async def achievement(_, message: Message):
 # List of developer IDs (you can add more developer user IDs here)
 DEVELOPER_IDS = [1830238543]  # Replace with actual developer IDs ex. [1830238543, 987654321] 
 
+# Handle the /resetdb command (developer-only)
+@app.on_message(filters.command("resetdb") & filters.private)
+async def reset_db(_, message: Message):
+    user_id = message.from_user.id
+
+    # Check if the user is a developer
+    if user_id not in DEVELOPER_IDS:
+        await message.reply("You are not authorized to use this command.")
+        return
+
+    # Split the command text to check for "all" or specific user ID
+    text = message.text.split(" ")
+
+    # If the command is "/resetdb all", reset all users
+    if len(text) == 2 and text[1].lower() == "all":
+        cursor.execute("UPDATE users SET balance=5000, portfolio='{}', initial_balance=5000")
+        conn.commit()
+        await message.reply("All users' databases have been reset.")
+    
+    # If a user ID is provided, reset only that user's data
+    elif len(text) == 2:
+        try:
+            reset_user_id = int(text[1])
+            cursor.execute("SELECT * FROM users WHERE user_id=?", (reset_user_id,))
+            user = cursor.fetchone()
+            if user:
+                cursor.execute("UPDATE users SET balance=5000, portfolio='{}', initial_balance=5000 WHERE user_id=?", (reset_user_id,))
+                conn.commit()
+                await message.reply(f"User {reset_user_id}'s database has been reset.")
+            else:
+                await message.reply(f"User {reset_user_id} does not exist.")
+        except ValueError:
+            await message.reply("Please provide a valid user ID.")
+    
+    # If the command is not in the correct format
+    else:
+        await message.reply("Usage: /resetdb all or /resetdb {user_id}")
+
 # Handle the /airdrop command (developer-only)
 @app.on_message(filters.command("airdrop") & filters.private)
 async def airdrop(_, message: Message):
