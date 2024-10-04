@@ -1,12 +1,15 @@
 import random
 import pyrogram
-from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 import threading
 import time
 import sqlite3
 from pyrogram import enums
 from datetime import datetime
+import matplotlib.pyplot as plt
+import io
+from PIL import Image
+from pyrogram import Client, filters
 
 # Initialize the Pyrogram client
 api_id = "2208722"
@@ -45,9 +48,12 @@ class Stock:
     def __init__(self, name, price):
         self.name = name
         self.price = price
+        self.price_history = [price]  # Initialize with the first price
 
     def update_price(self):
-        self.price += random.uniform(-5, 5)
+        change = random.uniform(-5, 5)
+        self.price += change
+        self.price_history.append(self.price)  # Update the price history
 
 # Create a dictionary to store stocks
 stock_market = {
@@ -85,6 +91,20 @@ def get_user(user_id):
 def create_user(user_id):
     cursor.execute("INSERT INTO users (user_id) VALUES (?)", (user_id,))
     conn.commit()
+
+# Function to generate and save the stock price graph
+def generate_stock_price_graph(stock_symbol, stock):
+    plt.figure(figsize=(10, 5))
+    plt.plot(stock.price_history, marker='o', linestyle='-', color='b')
+    plt.title(f"{stock.name} ({stock_symbol}) - Price History")
+    plt.xlabel("Time (updates)")
+    plt.ylabel("Price ($)")
+    plt.grid(True)
+    # Save the graph as an image file
+    graph_file = f"{stock_symbol}_price_history.png"
+    plt.savefig(graph_file)
+    plt.close()  # Close the plot to avoid memory issues
+    return graph_file
 
 # Handle the /start command in DM
 @app.on_message(filters.command("start") & filters.private)
@@ -283,24 +303,18 @@ async def check_account(_, message: Message):
 
     await message.reply(message_text, parse_mode=enums.ParseMode.MARKDOWN)
 
-# Handle the /market command to display one stock at a time with Next/Prev buttons
 @app.on_message(filters.command("market"))
 async def market_status(_, message: Message):
     stock_symbols = list(stock_market.keys())  # Get the list of all stock symbols
     current_stock_index = 0  # Start with the first stock
 
-    # Function to generate inline buttons for navigating stock list
+    # Function to generate inline buttons for navigating stock list and requesting graph
     def generate_market_buttons(stock_index):
         prev_button = InlineKeyboardButton("⬅️ Previous", callback_data=f"prev_{stock_index}")
         next_button = InlineKeyboardButton("➡️ Next", callback_data=f"next_{stock_index}")
-        buttons = []
-
-        if stock_index > 0:
-            buttons.append(prev_button)
-        if stock_index < len(stock_symbols) - 1:
-            buttons.append(next_button)
-
-        return InlineKeyboardMarkup([buttons])
+        graph_button = InlineKeyboardButton("📈 Show Graph", callback_data=f"graph_{stock_index}")
+        buttons = [[prev_button, next_button], [graph_button]]  # Added graph button
+        return InlineKeyboardMarkup(buttons)
 
     # Send the initial stock details message with navigation buttons
     stock_symbol = stock_symbols[current_stock_index]
@@ -312,6 +326,23 @@ async def market_status(_, message: Message):
         reply_markup=generate_market_buttons(current_stock_index),
         parse_mode=enums.ParseMode.MARKDOWN
     )
+
+# Handle graph request callback
+@app.on_callback_query(filters.regex(r"^graph_\d+"))
+async def show_stock_graph(_, query):
+    _, stock_index = query.data.split("_")
+    stock_index = int(stock_index)
+
+    stock_symbols = list(stock_market.keys())
+    stock_symbol = stock_symbols[stock_index]
+    stock = stock_market[stock_symbol]
+
+    # Generate the stock price graph
+    graph_file = generate_stock_price_graph(stock_symbol, stock)
+
+    # Send the generated graph image to the user
+    await app.send_photo(query.message.chat.id, graph_file, caption=f"Price history of {stock.name} ({stock_symbol})")
+
 
 # Handle the callback queries for navigating stock details
 @app.on_callback_query(filters.regex(r"^(prev|next)_\d+"))
