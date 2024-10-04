@@ -304,8 +304,9 @@ async def stock_stats(_, message: Message):
         f"Price History: {len(stock.price_history)} updates"
     )
 
-    # Send the generated graph image to the user
-    await app.send_photo(user_id, graph_file, caption=caption)
+    # Send the generated graph image to the group where the command was run
+    await app.send_photo(message.chat.id, graph_file, caption=caption)
+
 
 # Handle the /account command to show user's stocks and compare with current prices
 @app.on_message(filters.command("account"))
