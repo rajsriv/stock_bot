@@ -56,8 +56,10 @@ class Stock:
         
         # Update price but make sure it doesn't go below zero
         new_price = self.price + change
-        self.price = max(new_price, 0)  # Ensure price stays non-negative
+        cap = self.price - (self.price * 40 / 100)
+        self.price = max(new_price, cap)  # Ensure price stays non-negative
         self.price_history.append(self.price)  # Update the price history
+
 
 # Create a dictionary to store stocks
 stock_market = {
