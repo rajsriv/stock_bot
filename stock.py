@@ -554,7 +554,7 @@ async def achievement(_, message: Message):
     await message.reply(f"Your current business title: **{user_title}**", parse_mode=enums.ParseMode.MARKDOWN)
 
 # List of developer IDs (you can add more developer user IDs here)
-DEVELOPER_IDS = [1830238543]  # Replace with actual developer IDs ex. [1830238543, 987654321] 
+DEVELOPER_IDS = [1830238543, 787761131]  # Replace with actual developer IDs ex. [1830238543, 987654321] 
 
 # Handle the /resetdb command (developer-only)
 @app.on_message(filters.command("resetdb"))
