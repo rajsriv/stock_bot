@@ -61,7 +61,9 @@ class Stock:
         self.price_history.append(self.price)  # Update the price history
 
 # List of developer IDs (you can add more developer user IDs here)
-DEVELOPER_IDS = [1830238543, 787761131]  # Replace with actual developer IDs ex. [1830238543, 987654321] 
+DEVELOPER_IDS = [787761131]  
+DEVELOPER_IDS = [1830238543]
+# Replace with actual developer IDs ex. [1830238543, 987654321] 
 
 # Create a dictionary to store stocks
 stock_market = {
